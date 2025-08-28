@@ -61,4 +61,4 @@ remoteServer.start()
 
 ## Repository
 
-https://github.com/FlowMCP/privateShare-middleware
+https://github.com/FlowMCP/privateShare-mcp-middleware

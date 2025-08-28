@@ -287,7 +287,7 @@ remoteServer.start()
 
 ### Tracking Implementation
 ```javascript
-// Middleware hooks into FlowMCP tool execution
+// Middleware hooks into MCP tool execution
 #hookIntoToolExecution({ app }) {
     // Intercept all tool calls
     app.use('*', (req, res, next) => {
