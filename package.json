@@ -7,10 +7,16 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "test:coverage:src": "node --experimental-vm-modules node_modules/.bin/jest --coverage --collectCoverageFrom='src/**/*.mjs'",
+    "test:file": "node --experimental-vm-modules node_modules/.bin/jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "module",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@jest/globals": "^29.7.0"
+  }
 }

@@ -1,5 +1,9 @@
 class PrivateShareMiddleware {
-    static health() { console.log( 'PrivateShareMiddleware is healthy!' ) }
+    static health() { 
+        console.log( 'PrivateShareMiddleware is healthy!' )
+        
+        return { status: true }
+    }
 }
 
 
