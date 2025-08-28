@@ -4,9 +4,9 @@ MCP server middleware for tool call tracking and payment statistics.
 
 ## Quick Navigation
 
-- **[=Ë Full Specification](./src/MIDDLEWARE.md)** - Complete API and integration guide
-- **[=Ú Main Documentation](https://github.com/a6b8/privateShare)** - Project overview and guides
-- **[™ Core Module](https://github.com/FlowMCP/privateShare-core)** - Payment processing system
+- **[=ï¿½ Full Specification](./src/MIDDLEWARE.md)** - Complete API and integration guide
+- **[=ï¿½ Main Documentation](https://github.com/a6b8/privateShare)** - Project overview and guides
+- **[ï¿½ Core Module](https://github.com/FlowMCP/privateShare-core)** - Payment processing system
 
 ## Key Documentation Links
 
@@ -21,25 +21,42 @@ The Middleware runs **inside MCP servers** to:
 - Implement server locking during payment processing
 - Manage period-based billing cycles
 
-## Quick Start with FlowMCP
+## Quick Start with RemoteServer
 
 ```javascript
-import { FlowMCP } from 'flow-mcp'
+import { RemoteServer } from 'mcpServers'
+import { FlowMCP } from 'flowmcp'
 import { PrivateShareMiddleware } from 'privateshare-middleware'
 
-// Create MCP server
-const server = new FlowMCP({ name: 'my-server', version: '1.0.0' })
+// Create RemoteServer instance
+const remoteServer = new RemoteServer({ silent: false })
 
-// Install middleware
+// Get Express app from RemoteServer
+const app = remoteServer.getApp()
+
+// Create and install middleware
 const middleware = new PrivateShareMiddleware({
     routePath: '/privateShare',
     bearerToken: process.env.PRIVATESHARE_API_TOKEN
 })
 
-const { app } = server.getApp()
+// Install middleware on Express app
 middleware.install({ app })
 
-server.start({ port: 8080 })
+// Add your MCP tools via activation payloads
+const { activationPayloads } = FlowMCP.prepareActivations({ 
+    arrayOfSchemas: [ /* your schemas */ ], 
+    envObject: {} 
+})
+
+remoteServer.addActivationPayloads({
+    activationPayloads,
+    routePath: '/privateShare',
+    transportProtocols: ['sse']
+})
+
+// Start server
+remoteServer.start()
 ```
 
 ## Repository

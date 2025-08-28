@@ -24,32 +24,44 @@ The Middleware module (`3-privateShare-middleware`) is installed on **MCP Server
 └── package.json
 ```
 
-### Integration with FlowMCP
+### Integration with RemoteServer
 
 #### Installation Pattern
 ```javascript
-import { FlowMCP } from 'flow-mcp'
+import { RemoteServer } from 'mcpServers'
+import { FlowMCP } from 'flowmcp'
 import { PrivateShareMiddleware } from 'privateshare-middleware'
 
-// MCP Server setup
-const server = new FlowMCP( {
-    name: 'my-mcp-server',
-    version: '1.0.0'
-} )
+// Create RemoteServer instance
+const remoteServer = new RemoteServer( { silent: false } )
 
-// Install middleware on the Express app
+// Get Express app from RemoteServer
+const app = remoteServer.getApp()
+
+// Create and install middleware
 const middleware = new PrivateShareMiddleware( {
     routePath: '/privateShare',
     bearerToken: process.env.PRIVATESHARE_API_TOKEN,
     silent: false
 } )
 
-// Get Express app and install routes
-const { app } = server.getApp()
+// Install middleware on Express app
 middleware.install( { app } )
 
+// Add your MCP tools via activation payloads
+const { activationPayloads } = FlowMCP.prepareActivations( { 
+    arrayOfSchemas: [ /* your tool schemas */ ], 
+    envObject: {} 
+} )
+
+remoteServer.addActivationPayloads( {
+    activationPayloads,
+    routePath: '/privateShare',
+    transportProtocols: [ 'sse' ]
+} )
+
 // Start server
-server.start( { port: 8080 } )
+remoteServer.start()
 ```
 
 ## PrivateShareMiddleware Class
@@ -232,21 +244,13 @@ static getServerLockStatus() {
 
 ### Automatic Integration
 ```javascript
-// FlowMCP Server with automatic tool tracking
-const server = new FlowMCP({
-    name: 'my-server',
-    version: '1.0.0'
-})
+// RemoteServer with automatic tool tracking
+import { RemoteServer } from 'mcpServers'
+import { FlowMCP } from 'flowmcp'
+import { PrivateShareMiddleware } from 'privateshare-middleware'
 
-// Add tools
-server.addTool('getAllPrices_dune', {
-    description: 'Get all crypto prices from Dune',
-    parameters: { /* ... */ },
-    handler: async ({ request }) => {
-        // Tool logic here
-        return { result: 'data' }
-    }
-})
+const remoteServer = new RemoteServer({ silent: false })
+const app = remoteServer.getApp()
 
 // Install middleware (tracks all tool calls automatically)
 const middleware = new PrivateShareMiddleware({
@@ -254,8 +258,31 @@ const middleware = new PrivateShareMiddleware({
     bearerToken: process.env.PRIVATESHARE_API_TOKEN
 })
 
-const { app } = server.getApp()
 middleware.install({ app })
+
+// Add tools via activation payloads
+const toolSchema = {
+    name: 'getAllPrices_dune',
+    description: 'Get all crypto prices from Dune',
+    parameters: { /* ... */ },
+    handler: async ({ request }) => {
+        // Tool logic here
+        return { result: 'data' }
+    }
+}
+
+const { activationPayloads } = FlowMCP.prepareActivations({ 
+    arrayOfSchemas: [ toolSchema ], 
+    envObject: {} 
+})
+
+remoteServer.addActivationPayloads({
+    activationPayloads,
+    routePath: '/privateShare',
+    transportProtocols: ['sse']
+})
+
+remoteServer.start()
 ```
 
 ### Tracking Implementation
@@ -406,17 +433,17 @@ PRIVATESHARE_DATA_RETENTION_MS=86400000
 ## Complete Integration Example
 
 ```javascript
-import { FlowMCP } from 'flow-mcp'
+import { RemoteServer } from 'mcpServers'
+import { FlowMCP } from 'flowmcp'
 import { PrivateShareMiddleware } from 'privateshare-middleware'
 
-// 1. Create MCP Server
-const server = new FlowMCP({
-    name: 'premium-data-server',
-    version: '1.0.0'
-})
+// 1. Create RemoteServer instance
+const remoteServer = new RemoteServer({ silent: false })
+const app = remoteServer.getApp()
 
-// 2. Add monetized tools
-server.addTool('getAllPrices_dune', {
+// 2. Define monetized tool schemas
+const getAllPricesDune = {
+    name: 'getAllPrices_dune',
     description: 'Get cryptocurrency prices from Dune Analytics',
     parameters: {
         type: 'object',
@@ -429,9 +456,10 @@ server.addTool('getAllPrices_dune', {
         const prices = await duneAnalytics.getPrices(request.params.tokens)
         return { prices }
     }
-})
+}
 
-server.addTool('getWeather_api', {
+const getWeatherApi = {
+    name: 'getWeather_api',
     description: 'Get weather data from premium API',
     parameters: {
         type: 'object',
@@ -444,7 +472,7 @@ server.addTool('getWeather_api', {
         const weather = await weatherAPI.getWeather(request.params.location)
         return { weather }
     }
-})
+}
 
 // 3. Install PrivateShare Middleware
 const middleware = new PrivateShareMiddleware({
@@ -453,11 +481,22 @@ const middleware = new PrivateShareMiddleware({
     silent: false
 })
 
-const { app } = server.getApp()
 middleware.install({ app })
 
-// 4. Start server
-server.start({ port: 8080 })
+// 4. Add tools via activation payloads
+const { activationPayloads } = FlowMCP.prepareActivations({ 
+    arrayOfSchemas: [ getAllPricesDune, getWeatherApi ], 
+    envObject: {} 
+})
+
+remoteServer.addActivationPayloads({
+    activationPayloads,
+    routePath: '/privateShare',
+    transportProtocols: ['sse']
+})
+
+// 5. Start server
+remoteServer.start()
 ```
 
 ## Testing Strategy
